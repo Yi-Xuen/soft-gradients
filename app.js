@@ -399,6 +399,7 @@
   function load(file) {
     if (!file || !file.type.startsWith('image/')) return;
     document.querySelectorAll('.thumbs .on').forEach(b => b.classList.remove('on'));
+    usePhoto(null);
     loadUrl(URL.createObjectURL(file), false);
   }
 
@@ -420,6 +421,26 @@
 
 
 
+  // ---- Unsplash API guidelines: attribution + download tracking ----
+  const UTM = 'utm_source=soft_gradients&utm_medium=referral';
+  const withUtm = u => u + (u.includes('?') ? '&' : '?') + UTM;
+  const link = (href, text) => { const x = document.createElement('a'); x.href = withUtm(href); x.target = '_blank'; x.rel = 'noopener'; x.textContent = text; return x; };
+  // "Photo by <name> on Unsplash" (or "Photo from Unsplash" for the curated set, whose photographers we don't have)
+  function fillCredit(el, p) {
+    el.replaceChildren();
+    if (p.name) el.append('Photo by ', link(p.profile, p.name), ' on ', link('https://unsplash.com/', 'Unsplash'));
+    else el.append('Photo from ', link('https://unsplash.com/', 'Unsplash'));
+  }
+  const counted = new Set();
+  function usePhoto(p) {
+    const el = $('photoCredit');
+    if (p) { fillCredit(el, p); el.hidden = false; } else el.hidden = true;
+    if (p && p.dl && !counted.has(p.dl)) { // tell Unsplash the photo was used
+      counted.add(p.dl);
+      fetch(p.dl, { headers: { Authorization: `Client-ID ${getKey()}` } }).catch(() => {});
+    }
+  }
+
   let cat = 'all', items = CURATED;
   function renderThumbs() {
     const box = $('thumbs'), world = $('world'); box.innerHTML = ''; world.innerHTML = '';
@@ -430,10 +451,10 @@
       // strip thumbnail (used once a photo is chosen)
       const b = document.createElement('button'); b.type = 'button'; b.dataset.full = p.full;
       b.innerHTML = `<img loading="lazy" alt="" src="${p.thumb}">`;
-      b.addEventListener('click', () => { mark(p.full); loadUrl(p.full, true); });
+      b.addEventListener('click', () => { mark(p.full); usePhoto(p); loadUrl(p.full, true); });
       box.appendChild(b);
       // wall tile (empty state), staggered columns
-      const t = document.createElement('button'); t.type = 'button'; t.className = 'tile';
+      const t = document.createElement('div'); t.className = 'tile'; t.tabIndex = 0; t.setAttribute('role', 'button');
       // masonry: mixed aspect ratios, each tile goes in the shortest column
       const ar = RATIOS[(i * 7 + (i >> 1) * 3) % RATIOS.length], th = Math.round(TW / ar);
       let col = 0; for (let c = 1; c < COLS; c++) if (colH[c] < colH[col]) col = c;
@@ -442,7 +463,10 @@
       colH[col] += th + GAP;
       t.dataset.full = p.full;
       t.innerHTML = `<img alt="" draggable="false" src="${p.board || p.thumb}">`;
-      t.addEventListener('click', () => { if (panMoved > 6 || busy) return; mark(p.full); pick(p, t); });
+      if (p.name) { const c = document.createElement('div'); c.className = 'tileCredit'; fillCredit(c, p); t.appendChild(c); }
+      const go = () => { if (panMoved > 6 || busy) return; mark(p.full); usePhoto(p); pick(p, t); };
+      t.addEventListener('click', e => { if (e.target.closest('a')) return; go(); });
+      t.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a')) { e.preventDefault(); panMoved = 0; go(); } });
       world.appendChild(t);
     });
     world.style.width = PAD * 2 + Math.min(COLS, list.length) * (TW + GAP) - GAP + 'px';
@@ -511,7 +535,8 @@
                             { headers: { Authorization: `Client-ID ${key}` } });
       if (!r.ok) throw new Error(r.status);
       const j = await r.json();
-      items = j.results.map(p => ({ thumb: p.urls.thumb, board: p.urls.small, full: p.urls.regular, cat: null }));
+      items = j.results.map(p => ({ thumb: p.urls.thumb, board: p.urls.small, full: p.urls.regular, cat: null,
+        name: p.user.name, profile: p.user.links.html, dl: p.links.download_location }));
       cat = 'all'; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.cat === 'all'));
       renderThumbs();
     } catch (err) { alert('Unsplash search failed (' + err.message + '). Check your access key.'); }

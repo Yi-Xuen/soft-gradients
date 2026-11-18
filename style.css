@@ -34,9 +34,9 @@ body.has .boardBack{display:block}
 .flyer.goback{border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.18),0 16px 36px rgba(0,0,0,.28)}
 body.flying .drop{background:transparent}
 body.flying #dropHint{visibility:hidden}
-.out,.panel,.change,.swatches{transition:opacity .7s ease,transform .7s cubic-bezier(.22,.8,.2,1)}
+.out,.panel,.change,.swatches,.photoCredit{transition:opacity .7s ease,transform .7s cubic-bezier(.22,.8,.2,1)}
 .out{transition-delay:.05s}.swatches{transition-delay:.15s}.panel{transition-delay:.2s}.change{transition-delay:.1s}
-body.entering .out,body.entering .panel,body.entering .change,body.entering .swatches{opacity:0;transform:translateY(10px)}
+body.entering .out,body.entering .panel,body.entering .change,body.entering .swatches,body.entering .photoCredit{opacity:0;transform:translateY(10px)}
 body.flying #orig{opacity:0}
 @media (prefers-reduced-motion:reduce){.board,.flyer.go,.flyer.goback,.out,.panel,.change,.swatches{transition:none}}
 .board.over{outline:2px dashed var(--mut);outline-offset:-8px}
@@ -60,6 +60,15 @@ body.flying #orig{opacity:0}
 .thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .credit{margin:0;font-size:11px;color:var(--mut)}
 .credit a{color:inherit}
+.photoCredit{margin:14px 0 0;font-size:12px;color:var(--mut)}
+.photoCredit a{color:inherit;text-underline-offset:2px}
+.photoCredit a:hover{color:var(--fg)}
+.photoCredit[hidden]{display:none}
+.tileCredit{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;font:500 11px var(--sans);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:linear-gradient(transparent,rgba(0,0,0,.6));opacity:0;transition:opacity .25s}
+.tileCredit a{color:inherit;text-underline-offset:2px}
+.tile:hover .tileCredit,.tile:focus-within .tileCredit{opacity:1}
+@media (hover:none){.tileCredit{opacity:1}}
 .editor{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
 .panel{display:grid;gap:22px;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:16px;
   box-shadow:0 2px 6px rgba(0,0,0,.12),0 16px 36px rgba(0,0,0,.18)}
