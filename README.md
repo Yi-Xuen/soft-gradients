@@ -16,8 +16,8 @@ Then visit <http://localhost:8765>.
 - A WebGL shader blends the grid smoothly and bends it with simplex-noise warping, plus a little grain to avoid banding.
 - The title is generated from the palette's lightest and darkest colors.
 
-## Unsplash search (optional)
+## Unsplash
 
-The photo wall works out of the box. For live search, click **Key** and paste your own [Unsplash](https://unsplash.com/developers) Access Key. It is stored only in your browser's local storage.
+The photo wall works out of the box. Photos are hotlinked from Unsplash, credited to their photographers with links back to Unsplash, and picking one triggers Unsplash's download endpoint, as the [API guidelines](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines) ask.
 
-Photos are loaded from Unsplash.
+Live search and download tracking go through a small proxy that holds the Access Key, so visitors never need their own key. See [worker/README.md](worker/README.md) to deploy it, then set `PROXY` in `app.js`.

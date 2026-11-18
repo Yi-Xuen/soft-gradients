@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Soft Gradients</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy&family=Open+Sans:wght@400;500;600&display=swap">
@@ -26,13 +27,13 @@
       <label id="drop" class="drop" for="file">
         <div id="orig" role="img" aria-label="Uploaded photo" hidden></div>
         <span id="dropHint">Drop image or click to upload</span>
+        <p id="photoCredit" class="photoCredit" hidden></p>
       </label>
       <div class="out">
         <canvas id="gl"></canvas>
       </div>
     </div>
     <div id="swatches" class="swatches"></div>
-    <p id="photoCredit" class="photoCredit" hidden></p>
     </div>
 
     <aside class="panel" aria-label="Gradient controls">
@@ -82,11 +83,10 @@
       <div class="tabs" id="tabs">
         <button type="button" data-cat="all" class="on">All</button>
         <button type="button" data-cat="nature">Nature</button>
-        <button type="button" data-cat="wallpaper">Wallpaper</button>
+        <button type="button" data-cat="wallpaper">Scenery</button>
       </div>
-      <form id="searchForm" class="search">
-        <input id="q" type="search" placeholder="Search Unsplash (needs API key)" aria-label="Search Unsplash">
-        <button type="button" id="keyBtn" title="Set Unsplash API key">Key</button>
+      <form id="searchForm" class="search" hidden>
+        <input id="q" type="search" placeholder="Search photos" aria-label="Search photos">
       </form>
     </div>
     <div id="board" class="board" aria-label="Photo wall: drag to explore, click a photo to use it">

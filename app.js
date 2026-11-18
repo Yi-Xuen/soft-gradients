@@ -404,24 +404,43 @@
   }
 
   // ---- Unsplash gallery ----
-  // Curated landscape/scenery shots (no close-ups). cat: n = nature, w = wallpaper.
+  // Curated landscape/scenery shots (no close-ups): [image id, n = nature / w = wallpaper, photographer, profile, download endpoint].
   const CURATED = [
-    ['1506744038136-46273834b3fb', 'n'], ['1469474968028-56623f02e42e', 'n'], ['1441974231531-c6227db76b6e', 'n'],
-    ['1507525428034-b723cf961d3e', 'n'], ['1500382017468-9049fed747ef', 'n'], ['1470071459604-3b5ec3a7fe05', 'n'],
-    ['1464822759023-fed622ff2c3b', 'w'], ['1472214103451-9374bd1c798e', 'n'], ['1501785888041-af3ef285b470', 'n'],
-    ['1519681393784-d120267933ba', 'w'], ['1426604966848-d7adac402bff', 'n'], ['1454496522488-7a8e488e8606', 'w'],
-    ['1433086966358-54859d0ed716', 'n'], ['1505118380757-91f5f5632de0', 'w'], ['1477346611705-65d1883cee1e', 'w'],
-    ['1470252649378-9c29740c9fa8', 'w'], ['1473580044384-7ba9967e16a0', 'w'], ['1509023464722-18d996393ca8', 'w'],
-    ['1475924156734-496f6cac6ec1', 'w'], ['1439066615861-d1af74d74000', 'n'],
-    ['1482938289607-e9573fc25ebb', 'n'], ['1494500764479-0c8f2919a3d8', 'n'], ['1500534314209-a25ddb2bd429', 'n'],
-    ['1490730141103-6cac27aaab94', 'w'], ['1476820865390-c52aeebb9891', 'n'], ['1516912481808-3406841bd33c', 'n'],
-  ].map(([id, c]) => ({ thumb: `https://images.unsplash.com/photo-${id}?w=240&q=60&auto=format&fit=crop`,
-                        board: `https://images.unsplash.com/photo-${id}?w=440&q=65&auto=format&fit=crop`,
-                        full: `https://images.unsplash.com/photo-${id}?w=900&q=75&auto=format&fit=crop`, cat: c }));
+    ["1506744038136-46273834b3fb", "n", "Bailey Zindel", "https://unsplash.com/@baileyzindel", "https://api.unsplash.com/photos/NRQV-hBF10M/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MTJ8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzk0OTc5NDQxfDA"],
+    ["1469474968028-56623f02e42e", "n", "Urban Vintage", "https://unsplash.com/@urban_vintage", "https://api.unsplash.com/photos/78A265wPiO4/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MTN8fGxhbmRzY2FwZXxlbnwxfDB8fHwxNzk0OTc5NDMwfDA"],
+    ["1441974231531-c6227db76b6e", "n", "Lukasz Szmigiel", "https://unsplash.com/@szmigieldesign", "https://api.unsplash.com/photos/jFCViYFYcus/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8Mjd8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzk0OTc5NDQxfDA"],
+    ["1507525428034-b723cf961d3e", "n", "Sean Oulashin", "https://unsplash.com/@oulashin", "https://api.unsplash.com/photos/KMn4VEeEPR8/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MXx8b2NlYW4lMjBiZWFjaHxlbnwxfDB8fHwxNzk0OTc5NDM4fDA"],
+    ["1500382017468-9049fed747ef", "n", "Federico Respini", "https://unsplash.com/@federicorespini", "https://api.unsplash.com/photos/sYffw0LNr7s/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8Njh8fHN1bnNldHxlbnwxfDB8fHwxNzk0OTc5NDM1fDA"],
+    ["1470071459604-3b5ec3a7fe05", "n", "v2osk", "https://unsplash.com/@v2osk", "https://api.unsplash.com/photos/1Z2niiBPg5A/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MjN8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzk0OTc5NDQxfDA"],
+    ["1464822759023-fed622ff2c3b", "w", "Kalen Emsley", "https://unsplash.com/@kalenemsley", "https://api.unsplash.com/photos/Bkci_8qcdvQ/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8M3x8bmF0dXJlJTIwd2FsbHBhcGVyfGVufDF8MHx8fDE3OTQ5Nzk0NDF8MA"],
+    ["1472214103451-9374bd1c798e", "n", "Robert Lukeman", "https://unsplash.com/@robertlukeman", "https://api.unsplash.com/photos/_RBcxo9AU-U/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MTN8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzk0OTc5NDQxfDA"],
+    ["1501785888041-af3ef285b470", "n", "Pietro De Grandi", "https://unsplash.com/@peter_mc_greats", "https://api.unsplash.com/photos/T7K4aEPoGGk/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MXx8bmF0dXJlJTIwd2FsbHBhcGVyfGVufDF8MHx8fDE3OTQ5Nzk0NDF8MA"],
+    ["1519681393784-d120267933ba", "w", "Benjamin Voros", "https://unsplash.com/@vorosbenisop", "https://api.unsplash.com/photos/phIFdC6lA4E/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MjR8fHNreXxlbnwxfDB8fHwxNzk0OTc5NDQ5fDA"],
+    ["1426604966848-d7adac402bff", "n", "Adam Kool", "https://unsplash.com/@adamkool", "https://api.unsplash.com/photos/ndN00KmbJ1c/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MzJ8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzk0OTc5NDQxfDA"],
+    ["1454496522488-7a8e488e8606", "w", "Rohit Tandon", "https://unsplash.com/@sepoys", "https://api.unsplash.com/photos/9wg5jCEPBsw/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8Mnx8bW91bnRhaW5zfGVufDF8MHx8fDE3OTQ5Nzk0MzF8MA"],
+    ["1442120108414-42e7ea50d0b5", "n", "Eutah Mizushima", "https://unsplash.com/@eutahm", "https://api.unsplash.com/photos/OWwK_0_EnxY/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MTJ8fHNjZW5pYyUyMGxhbmRzY2FwZSUyMHZpZXd8ZW58MXwwfHx8MTc5NDk3OTQ2Nnww"],
+    ["1438786657495-640937046d18", "n", "Claudel Rheault", "https://unsplash.com/@claudelrheault", "https://api.unsplash.com/photos/ZVbv1akA-l4/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MXx8c2NlbmljJTIwbGFuZHNjYXBlJTIwdmlld3xlbnwxfDB8fHwxNzk0OTc5NDY2fDA"],
+    ["1477346611705-65d1883cee1e", "w", "JOHN TOWNER", "https://unsplash.com/@heytowner", "https://api.unsplash.com/photos/JgOeRuGD_Y4/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MTd8fG1vdW50YWluc3xlbnwxfDB8fHwxNzk0OTc5NDMxfDA"],
+    ["1470252649378-9c29740c9fa8", "w", "Dawid Zawiła", "https://unsplash.com/@davealmine", "https://api.unsplash.com/photos/-G3rw6Y02D0/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8Nnx8c3Vuc2V0fGVufDF8MHx8fDE3OTQ5Nzk0MzR8MA"],
+    ["1473580044384-7ba9967e16a0", "w", "Giorgio Parravicini", "https://unsplash.com/@parradesign", "https://api.unsplash.com/photos/12IHVEFRacQ/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8NHx8ZGVzZXJ0fGVufDF8MHx8fDE3OTQ5Nzk0Mzl8MA"],
+    ["1483921020237-2ff51e8e4b22", "w", "Erol Ahmed", "https://unsplash.com/@erol", "https://api.unsplash.com/photos/d3pTF3r_hwY/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MXx8c25vd3klMjBtb3VudGFpbnN8ZW58MXwwfHx8MTc5NDk3OTQ2N3ww"],
+    ["1475924156734-496f6cac6ec1", "w", "Quino Al", "https://unsplash.com/@quinoal", "https://api.unsplash.com/photos/mBQIfKlvowM/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8M3x8c3Vuc2V0fGVufDF8MHx8fDE3OTQ5Nzk0MzR8MA"],
+    ["1439066615861-d1af74d74000", "n", "Aaron Burden", "https://unsplash.com/@aaronburden", "https://api.unsplash.com/photos/aRya3uMiNIA/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8OXx8bGFrZXxlbnwxfDB8fHwxNzk0OTc5NDM2fDA"],
+    ["1507371341162-763b5e419408", "n", "Ricardo Gomez Angel", "https://unsplash.com/@rgaleriacom", "https://api.unsplash.com/photos/4hhP-Ud4e84/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8OHx8YXV0dW1uJTIwZm9yZXN0fGVufDF8MHx8fDE3OTQ5Nzk0Njh8MA"],
+    ["1494500764479-0c8f2919a3d8", "n", "Ken Cheung", "https://unsplash.com/@kencheungphoto", "https://api.unsplash.com/photos/KonWFWUaAuk/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MTB8fGxha2V8ZW58MXwwfHx8MTc5NDk3OTQzNnww"],
+    ["1535025075092-5a1cf795130b", "n", "Tobias Tullius", "https://unsplash.com/@tobiastu", "https://api.unsplash.com/photos/RhjVGxILcqE/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MjN8fGhpbGxzJTIwYXQlMjBzdW5yaXNlfGVufDF8MHx8fDE3OTQ5Nzk0Njd8MA"],
+    ["1504386106331-3e4e71712b38", "w", "Andrey Grinkevich", "https://unsplash.com/@grin", "https://api.unsplash.com/photos/0x6RTts1jRU/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8MXx8aGlsbHMlMjBhdCUyMHN1bnJpc2V8ZW58MXwwfHx8MTc5NDk3OTQ2N3ww"],
+    ["1500885168199-dc1fde1d8177", "n", "Niklas Tidbury", "https://unsplash.com/@ntidbury", "https://api.unsplash.com/photos/r2vxqvKXng8/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8OHx8c2NlbmljJTIwbGFuZHNjYXBlJTIwdmlld3xlbnwxfDB8fHwxNzk0OTc5NDY2fDA"],
+    ["1477468572316-36979010099d", "w", "Paul Pastourmatzis", "https://unsplash.com/@paulpastourmatzis", "https://api.unsplash.com/photos/r0J9sGBWFOc/download?ixid=M3wxMTM3MzM2fDB8MXxzZWFyY2h8N3x8c25vd3klMjBtb3VudGFpbnN8ZW58MXwwfHx8MTc5NDk3OTQ2N3ww"],
+  ].map(([id, c, name, profile, dl]) => ({ thumb: `https://images.unsplash.com/photo-${id}?w=240&q=60&auto=format&fit=crop`,
+                        board: `https://images.unsplash.com/photo-${id}?w=560&q=65&auto=format&fit=crop`,
+                        full: `https://images.unsplash.com/photo-${id}?w=900&q=75&auto=format&fit=crop`, cat: c, name, profile, dl }));
 
 
 
   // ---- Unsplash API guidelines: attribution + download tracking ----
+  // Base URL of the proxy Worker in /worker (it keeps the Unsplash key off the page). Empty = search is hidden.
+  const PROXY = '';
   const UTM = 'utm_source=soft_gradients&utm_medium=referral';
   const withUtm = u => u + (u.includes('?') ? '&' : '?') + UTM;
   const link = (href, text) => { const x = document.createElement('a'); x.href = withUtm(href); x.target = '_blank'; x.rel = 'noopener'; x.textContent = text; return x; };
@@ -435,9 +454,9 @@
   function usePhoto(p) {
     const el = $('photoCredit');
     if (p) { fillCredit(el, p); el.hidden = false; } else el.hidden = true;
-    if (p && p.dl && !counted.has(p.dl)) { // tell Unsplash the photo was used
+    if (PROXY && p && p.dl && !counted.has(p.dl)) { // tell Unsplash the photo was used (the proxy holds the API key)
       counted.add(p.dl);
-      fetch(p.dl, { headers: { Authorization: `Client-ID ${getKey()}` } }).catch(() => {});
+      fetch(`${PROXY}/download?loc=${encodeURIComponent(p.dl)}`).catch(() => {});
     }
   }
 
@@ -446,7 +465,7 @@
     const box = $('thumbs'), world = $('world'); box.innerHTML = ''; world.innerHTML = '';
     const list = items.filter(p => cat === 'all' || !p.cat || (cat === 'nature') === (p.cat === 'n'));
     const mark = url => box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.full === url));
-    const colH = Array(COLS).fill(PAD);
+    const L = layoutCircle(list.length);
     list.forEach((p, i) => {
       // strip thumbnail (used once a photo is chosen)
       const b = document.createElement('button'); b.type = 'button'; b.dataset.full = p.full;
@@ -455,12 +474,9 @@
       box.appendChild(b);
       // wall tile (empty state), staggered columns
       const t = document.createElement('div'); t.className = 'tile'; t.tabIndex = 0; t.setAttribute('role', 'button');
-      // masonry: mixed aspect ratios, each tile goes in the shortest column
-      const ar = RATIOS[(i * 7 + (i >> 1) * 3) % RATIOS.length], th = Math.round(TW / ar);
-      let col = 0; for (let c = 1; c < COLS; c++) if (colH[c] < colH[col]) col = c;
-      t.style.left = PAD + col * (TW + GAP) + 'px'; t.style.top = colH[col] + 'px';
-      t.style.width = TW + 'px'; t.style.height = th + 'px';
-      colH[col] += th + GAP;
+      const r = L.rects[i];
+      t.style.left = r.x + 'px'; t.style.top = r.y + 'px';
+      t.style.width = r.w + 'px'; t.style.height = r.h + 'px';
       t.dataset.full = p.full;
       t.innerHTML = `<img alt="" draggable="false" src="${p.board || p.thumb}">`;
       if (p.name) { const c = document.createElement('div'); c.className = 'tileCredit'; fillCredit(c, p); t.appendChild(c); }
@@ -469,14 +485,44 @@
       t.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a')) { e.preventDefault(); panMoved = 0; go(); } });
       world.appendChild(t);
     });
-    world.style.width = PAD * 2 + Math.min(COLS, list.length) * (TW + GAP) - GAP + 'px';
-    world.style.height = Math.max(...colH) - GAP + PAD + 'px';
+    world.style.width = L.w + 'px'; world.style.height = L.h + 'px';
     centerWorld();
   }
 
   // ---- draggable photo wall ----
-  const COLS = 5, TW = 230, GAP = 32, PAD = 56;
+  const GAP = 28, PAD = 80;
   const RATIOS = [0.75, 1, 1.333, 0.667, 1.25]; // 3:4, 1:1, 4:3, 2:3, 5:4 (width/height)
+  const WIDTHS = [140, 180, 220, 270];          // mixed sizes so the wall doesn't read as a grid
+  // Tiles spiral outward from the centre: biggest first in the middle, each one dropped at the first
+  // free spot along the spiral, so the whole wall grows into a rough circle.
+  function layoutCircle(n) {
+    const rnd = i => ((Math.imul(i + 1, 2654435761) >>> 0) % 1000) / 1000;
+    const sizes = Array.from({ length: n }, (_, i) => {
+      const w = WIDTHS[Math.floor(rnd(i * 3 + 1) * WIDTHS.length)];
+      const ar = RATIOS[Math.floor(rnd(i * 3 + 2) * RATIOS.length)];
+      return { i, w, h: Math.round(w / ar) };
+    });
+    const order = [...sizes].sort((a, b) => b.w * b.h - a.w * a.h);
+    const rects = new Array(n), placed = [];
+    const free = (x, y, w, h) => placed.every(q => x + w + GAP <= q.x || q.x + q.w + GAP <= x || y + h + GAP <= q.y || q.y + q.h + GAP <= y);
+    order.forEach((s, k) => {
+      let pos = null;
+      if (!k) pos = { x: -s.w / 2, y: -s.h / 2 };
+      for (let r = 20, a0 = k * 2.399963; !pos; r += 10) { // golden-angle start so tiles fan around the ring
+        const steps = Math.max(8, Math.round(2 * Math.PI * r / 36));
+        for (let j = 0; j < steps && !pos; j++) {
+          const th = a0 + (j / steps) * 2 * Math.PI, x = Math.cos(th) * r * 1.15 - s.w / 2, y = Math.sin(th) * r - s.h / 2;
+          if (free(x, y, s.w, s.h)) pos = { x, y };
+        }
+      }
+      const rect = { x: pos.x, y: pos.y, w: s.w, h: s.h };
+      placed.push(rect); rects[s.i] = rect;
+    });
+    const x0 = Math.min(...placed.map(q => q.x)), y0 = Math.min(...placed.map(q => q.y));
+    const x1 = Math.max(...placed.map(q => q.x + q.w)), y1 = Math.max(...placed.map(q => q.y + q.h));
+    for (const q of placed) { q.x = Math.round(q.x - x0 + PAD); q.y = Math.round(q.y - y0 + PAD); }
+    return { rects, w: Math.round(x1 - x0 + PAD * 2), h: Math.round(y1 - y0 + PAD * 2) };
+  }
   const board = $('board'), worldEl = $('world');
   let px = 0, py = 0, panMoved = 0, vx = 0, vy = 0, raf = 0, down = null;
   $('change').addEventListener('click', () => leaveEditor());
@@ -518,28 +564,22 @@
     $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
     renderThumbs();
   });
-  // optional live search (Unsplash API key stored only in this browser)
-  const getKey = () => { try { return localStorage.getItem('unsplashKey') || ''; } catch { return ''; } };
-  $('keyBtn').addEventListener('click', () => {
-    const k = prompt('Unsplash Access Key (stored only in this browser):', getKey());
-    if (k !== null) try { localStorage.setItem('unsplashKey', k.trim()); } catch {}
-  });
+  // live search goes through the proxy, so visitors never need their own Unsplash key
+  $('searchForm').hidden = !PROXY;
   $('searchForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const key = getKey(), q = $('q').value.trim();
-    if (!key) { $('keyBtn').click(); return; }
+    const q = $('q').value.trim();
     // bias results toward wide scenery, away from subject close-ups
-    const query = `${q || (cat === 'wallpaper' ? 'wallpaper' : 'landscape')} landscape scenery`;
+    const query = `${q || (cat === 'wallpaper' ? 'scenery' : 'landscape')} landscape scenery`;
     try {
-      const r = await fetch(`https://api.unsplash.com/search/photos?per_page=30&orientation=portrait&content_filter=high&query=${encodeURIComponent(query)}`,
-                            { headers: { Authorization: `Client-ID ${key}` } });
+      const r = await fetch(`${PROXY}/search?q=${encodeURIComponent(query)}`);
       if (!r.ok) throw new Error(r.status);
       const j = await r.json();
       items = j.results.map(p => ({ thumb: p.urls.thumb, board: p.urls.small, full: p.urls.regular, cat: null,
         name: p.user.name, profile: p.user.links.html, dl: p.links.download_location }));
       cat = 'all'; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.cat === 'all'));
       renderThumbs();
-    } catch (err) { alert('Unsplash search failed (' + err.message + '). Check your access key.'); }
+    } catch (err) { alert('Search failed (' + err.message + '). Try again in a moment.'); }
   });
   renderThumbs();
   $('file').addEventListener('change', e => load(e.target.files[0]));
