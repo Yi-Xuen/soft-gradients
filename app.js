@@ -440,7 +440,7 @@
     ["https://images.unsplash.com/photo-1477468572316-36979010099d?ixid=M3wxMTM3MzM2fDB8MXxhbGx8fHx8fHx8fHwxNzk0OTgxNzE2fA&ixlib=rb-4.1.0", "w", "Paul Pastourmatzis", "https://unsplash.com/@paulpastourmatzis", "https://api.unsplash.com/photos/r0J9sGBWFOc/download?ixid=M3wxMTM3MzM2fDB8MXxhbGx8fHx8fHx8fHwxNzk0OTgxNzE2fA"],
   ].map(([raw, c, name, profile, dl]) => { // raw = photo.urls.raw from the API (keeps Unsplash's tracking params); we only add sizing
     const u = (w, q) => `${raw}&w=${w}&q=${q}&auto=format&fit=crop`;
-    return { thumb: u(240, 60), board: u(560, 65), full: u(900, 75), cat: c, name, profile, dl };
+    return { id: dl.match(/photos\/([^/]+)\//)[1], thumb: u(240, 60), board: u(560, 65), full: u(900, 75), cat: c, name, profile, dl };
   });
 
 
@@ -452,9 +452,9 @@
   // It is never read on the live site, where visitors go through the proxy.
   const DEV_KEY = (() => { try { return ['localhost', '127.0.0.1'].includes(location.hostname) ? localStorage.getItem('unsplashKey') || '' : ''; } catch { return ''; } })();
   const devAuth = { headers: { Authorization: `Client-ID ${DEV_KEY}` } };
-  const searchPhotos = q => DEV_KEY
-    ? fetch(`https://api.unsplash.com/search/photos?per_page=30&content_filter=high&query=${encodeURIComponent(q)}`, devAuth)
-    : fetch(`${PROXY}/search?q=${encodeURIComponent(q)}`);
+  const searchPhotos = (q, page = 1) => DEV_KEY
+    ? fetch(`https://api.unsplash.com/search/photos?per_page=30&content_filter=high&page=${page}&query=${encodeURIComponent(q)}`, devAuth)
+    : fetch(`${PROXY}/search?q=${encodeURIComponent(q)}&page=${page}`);
   const pingDownload = loc => DEV_KEY ? fetch(loc, devAuth) : fetch(`${PROXY}/download?loc=${encodeURIComponent(loc)}`);
   const UTM = 'utm_source=soft_gradients&utm_medium=referral';
   const withUtm = u => u + (u.includes('?') ? '&' : '?') + UTM;
@@ -475,82 +475,114 @@
     }
   }
 
-  let cat = 'all', items = CURATED;
-  function renderThumbs() {
-    const box = $('thumbs'), world = $('world'); box.innerHTML = ''; world.innerHTML = '';
-    const list = items.filter(p => cat === 'all' || !p.cat || (cat === 'nature') === (p.cat === 'n'));
-    const mark = url => box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.full === url));
-    const L = layoutCircle(list.length);
-    list.forEach((p, i) => {
-      // strip thumbnail (used once a photo is chosen)
-      const b = document.createElement('button'); b.type = 'button'; b.dataset.full = p.full;
-      b.innerHTML = `<img loading="lazy" alt="" src="${p.thumb}">`;
-      b.addEventListener('click', () => { mark(p.full); usePhoto(p); loadUrl(p.full, true); });
-      box.appendChild(b);
-      // wall tile (empty state), staggered columns
-      const t = document.createElement('div'); t.className = 'tile'; t.tabIndex = 0; t.setAttribute('role', 'button');
-      const r = L.rects[i];
-      t.style.left = r.x + 'px'; t.style.top = r.y + 'px';
-      t.style.width = r.w + 'px'; t.style.height = r.h + 'px';
-      t.dataset.full = p.full;
-      t.innerHTML = `<img alt="" draggable="false" src="${p.board || p.thumb}">`;
-      if (p.name) { const c = document.createElement('div'); c.className = 'tileCredit'; fillCredit(c, p); t.appendChild(c); }
-      const go = () => { if (panMoved > 6 || busy) return; mark(p.full); usePhoto(p); pick(p, t); };
-      t.addEventListener('click', e => { if (e.target.closest('a')) return; go(); });
-      t.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a')) { e.preventDefault(); panMoved = 0; go(); } });
-      world.appendChild(t);
-    });
-    world.style.width = L.w + 'px'; world.style.height = L.h + 'px';
-    centerWorld();
+  // ---- the wall: curated photos first, then more pages from Unsplash as you explore ----
+  const MAX_TILES = 240, PAGE_SIZE = 30;
+  const TAB_QUERY = { all: 'landscape nature', nature: 'nature landscape', wallpaper: 'scenery wallpaper' };
+  const curatedFor = c => CURATED.filter(p => c === 'all' || (c === 'nature') === (p.cat === 'n'));
+  const canFetch = !!(PROXY || DEV_KEY);
+  const fromApi = p => { // use the URLs the API returns (they carry Unsplash's tracking params); we only add sizing
+    const raw = p.urls.raw, u = (w, q) => `${raw}${raw.includes('?') ? '&' : '?'}w=${w}&q=${q}&auto=format&fit=crop`;
+    return { id: p.id, thumb: u(240, 60), board: u(560, 65), full: u(900, 75), cat: null,
+             name: p.user.name, profile: p.user.links.html, dl: p.links.download_location };
+  };
+  let cat = 'all', feed = null; // feed: the query behind the wall and how far through its pages we are
+  const shown = new Set();
+  function resetWall() {
+    worldEl.innerHTML = ''; shown.clear();
+    Object.assign(wall, { placed: [], n: 0, r: 20, minX: 0, maxX: 0, minY: 0, maxY: 0 });
+  }
+  function makeTile(p, r, animate) {
+    const t = document.createElement('div'); t.className = 'tile'; t.tabIndex = 0; t.setAttribute('role', 'button');
+    t.style.left = r.x + 'px'; t.style.top = r.y + 'px'; t.style.width = r.w + 'px'; t.style.height = r.h + 'px';
+    t.dataset.full = p.full;
+    t.innerHTML = `<img alt="" draggable="false" loading="lazy" decoding="async" src="${p.board || p.thumb}">`;
+    if (p.name) { const c = document.createElement('div'); c.className = 'tileCredit'; fillCredit(c, p); t.appendChild(c); }
+    const go = () => { if (panMoved > 6 || busy) return; usePhoto(p); pick(p, t); };
+    t.addEventListener('click', e => { if (e.target.closest('a')) return; go(); });
+    t.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a')) { e.preventDefault(); panMoved = 0; go(); } });
+    if (animate) { t.classList.add('fresh'); requestAnimationFrame(() => requestAnimationFrame(() => t.classList.remove('fresh'))); }
+    worldEl.appendChild(t);
+  }
+  // Add photos to the wall without moving the ones already there: biggest of each batch first, each dropped at the
+  // first free spot along a spiral from the centre, so the wall keeps growing into a rough circle.
+  function addTiles(list, animate = true) {
+    const rnd = i => ((Math.imul(i + 1, 2654435761) >>> 0) % 1000) / 1000;
+    const batch = list.filter(p => p.id && !shown.has(p.id)).slice(0, Math.max(0, MAX_TILES - wall.n));
+    const sized = batch.map(p => {
+      const k = wall.n++; shown.add(p.id);
+      const w = WIDTHS[Math.floor(rnd(k * 3 + 1) * WIDTHS.length)], ar = RATIOS[Math.floor(rnd(k * 3 + 2) * RATIOS.length)];
+      return { p, w, h: Math.round(w / ar) };
+    }).sort((a, b) => b.w * b.h - a.w * a.h);
+    const free = (x, y, w, h) => wall.placed.every(q => x + w + GAP <= q.x || q.x + q.w + GAP <= x || y + h + GAP <= q.y || q.y + q.h + GAP <= y);
+    for (const s of sized) {
+      let pos = wall.placed.length ? null : { x: -s.w / 2, y: -s.h / 2 };
+      for (let r = Math.max(20, wall.r - 140), a0 = wall.placed.length * 2.399963; !pos; r += 10) {
+        const steps = Math.max(8, Math.round(2 * Math.PI * r / 36));
+        for (let j = 0; j < steps && !pos; j++) {
+          const th = a0 + (j / steps) * 2 * Math.PI, x = Math.cos(th) * r * 1.15 - s.w / 2, y = Math.sin(th) * r - s.h / 2;
+          if (free(x, y, s.w, s.h)) { pos = { x, y }; wall.r = r; }
+        }
+      }
+      const rect = { x: Math.round(pos.x), y: Math.round(pos.y), w: s.w, h: s.h };
+      wall.placed.push(rect);
+      wall.minX = Math.min(wall.minX, rect.x); wall.maxX = Math.max(wall.maxX, rect.x + rect.w);
+      wall.minY = Math.min(wall.minY, rect.y); wall.maxY = Math.max(wall.maxY, rect.y + rect.h);
+      makeTile(s.p, rect, animate);
+    }
+    return sized.length;
+  }
+  async function loadMore(now = false) {
+    const f = feed; if (!f || !f.more || f.loading) return;
+    if (!now && Date.now() - (f.t || 0) < 1500) return; // pace the automatic loads while panning
+    f.loading = true; f.t = Date.now();
+    try {
+      const r = await searchPhotos(f.query, f.page + 1);
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      if (f !== feed) return; // the wall was reset while we waited
+      f.page++;
+      const added = addTiles(j.results.map(fromApi));
+      f.more = added > 0 && j.results.length >= PAGE_SIZE && f.page < j.total_pages && wall.n < MAX_TILES;
+    } catch { if (f === feed) f.more = false; } // out of requests or offline: keep what we have
+    finally { f.loading = false; }
+  }
+  // start (or restart) the wall from a list of photos, then pull in the first extra pages
+  async function startFeed(list, query, page = 0) {
+    resetWall(); addTiles(list, false); centerWorld();
+    const f = feed = { query, page, more: canFetch && !!query, loading: false };
+    if (f.more) { await loadMore(true); if (f === feed) await loadMore(true); }
   }
 
   // ---- draggable photo wall ----
   const GAP = 28, PAD = 80;
   const RATIOS = [0.75, 1, 1.333, 0.667, 1.25]; // 3:4, 1:1, 4:3, 2:3, 5:4 (width/height)
   const WIDTHS = [140, 180, 220, 270];          // mixed sizes so the wall doesn't read as a grid
-  // Tiles spiral outward from the centre: biggest first in the middle, each one dropped at the first
-  // free spot along the spiral, so the whole wall grows into a rough circle.
-  function layoutCircle(n) {
-    const rnd = i => ((Math.imul(i + 1, 2654435761) >>> 0) % 1000) / 1000;
-    const sizes = Array.from({ length: n }, (_, i) => {
-      const w = WIDTHS[Math.floor(rnd(i * 3 + 1) * WIDTHS.length)];
-      const ar = RATIOS[Math.floor(rnd(i * 3 + 2) * RATIOS.length)];
-      return { i, w, h: Math.round(w / ar) };
-    });
-    const order = [...sizes].sort((a, b) => b.w * b.h - a.w * a.h);
-    const rects = new Array(n), placed = [];
-    const free = (x, y, w, h) => placed.every(q => x + w + GAP <= q.x || q.x + q.w + GAP <= x || y + h + GAP <= q.y || q.y + q.h + GAP <= y);
-    order.forEach((s, k) => {
-      let pos = null;
-      if (!k) pos = { x: -s.w / 2, y: -s.h / 2 };
-      for (let r = 20, a0 = k * 2.399963; !pos; r += 10) { // golden-angle start so tiles fan around the ring
-        const steps = Math.max(8, Math.round(2 * Math.PI * r / 36));
-        for (let j = 0; j < steps && !pos; j++) {
-          const th = a0 + (j / steps) * 2 * Math.PI, x = Math.cos(th) * r * 1.15 - s.w / 2, y = Math.sin(th) * r - s.h / 2;
-          if (free(x, y, s.w, s.h)) pos = { x, y };
-        }
-      }
-      const rect = { x: pos.x, y: pos.y, w: s.w, h: s.h };
-      placed.push(rect); rects[s.i] = rect;
-    });
-    const x0 = Math.min(...placed.map(q => q.x)), y0 = Math.min(...placed.map(q => q.y));
-    const x1 = Math.max(...placed.map(q => q.x + q.w)), y1 = Math.max(...placed.map(q => q.y + q.h));
-    for (const q of placed) { q.x = Math.round(q.x - x0 + PAD); q.y = Math.round(q.y - y0 + PAD); }
-    return { rects, w: Math.round(x1 - x0 + PAD * 2), h: Math.round(y1 - y0 + PAD * 2) };
-  }
   const board = $('board'), worldEl = $('world');
+  const wall = { placed: [], n: 0, r: 20, minX: 0, maxX: 0, minY: 0, maxY: 0 }; // tile positions are centre-origin
   let px = 0, py = 0, panMoved = 0, vx = 0, vy = 0, raf = 0, down = null;
   $('change').addEventListener('click', () => leaveEditor());
   $('back').addEventListener('click', e => { e.stopPropagation(); document.body.classList.remove('empty'); draw(); });
   function place() {
     if (!board.clientWidth) return; // hidden
-    const vw = board.clientWidth, vh = board.clientHeight, ww = worldEl.offsetWidth, wh = worldEl.offsetHeight;
-    px = ww <= vw ? (vw - ww) / 2 : Math.min(0, Math.max(vw - ww, px));
-    py = wh <= vh ? (vh - wh) / 2 : Math.min(0, Math.max(vh - wh, py));
+    const vw = board.clientWidth, vh = board.clientHeight;
+    const cw = wall.maxX - wall.minX + PAD * 2, ch = wall.maxY - wall.minY + PAD * 2;
+    px = cw <= vw ? vw / 2 - (wall.minX + wall.maxX) / 2 : Math.min(PAD - wall.minX, Math.max(vw - wall.maxX - PAD, px));
+    py = ch <= vh ? vh / 2 - (wall.minY + wall.maxY) / 2 : Math.min(PAD - wall.minY, Math.max(vh - wall.maxY - PAD, py));
+    // the wall is round, so keep the view's centre inside an ellipse instead of the bounding box (no empty corners)
+    const mx = (wall.minX + wall.maxX) / 2, my = (wall.minY + wall.maxY) / 2;
+    const ea = (wall.maxX - wall.minX) / 2 * .9, eb = (wall.maxY - wall.minY) / 2 * .9;
+    let k = 0;
+    if (ea > 0 && eb > 0) {
+      let dx = vw / 2 - px - mx, dy = vh / 2 - py - my;
+      k = Math.hypot(dx / ea, dy / eb);
+      if (k > 1) { dx /= k; dy /= k; px = vw / 2 - mx - dx; py = vh / 2 - my - dy; k = 1; }
+    }
     worldEl.style.transform = `translate(${px}px,${py}px)`;
+    // exploring towards the rim of what's loaded (or the wall is still small): fetch the next page
+    if (feed && feed.more && !feed.loading && (k > .78 || cw < vw * 1.5 || ch < vh * 1.5)) loadMore();
   }
   function centerWorld() {
-    px = (board.clientWidth - worldEl.offsetWidth) / 2; py = (board.clientHeight - worldEl.offsetHeight) / 2; place();
+    px = board.clientWidth / 2 - (wall.minX + wall.maxX) / 2; py = board.clientHeight / 2 - (wall.minY + wall.maxY) / 2; place();
   }
   function glide() {
     vx *= .94; vy *= .94; px += vx; py += vy; place();
@@ -575,28 +607,28 @@
   window.addEventListener('resize', place);
   $('tabs').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    cat = b.dataset.cat; items = CURATED;
+    cat = b.dataset.cat; $('q').value = '';
     $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-    renderThumbs();
+    startFeed(curatedFor(cat), TAB_QUERY[cat]);
   });
   // live search goes through the proxy, so visitors never need their own Unsplash key
-  $('searchForm').hidden = !(PROXY || DEV_KEY);
+  $('searchForm').hidden = !canFetch;
   $('searchForm').addEventListener('submit', async e => {
     e.preventDefault();
     const q = $('q').value.trim();
-    const query = q || (cat === 'wallpaper' ? 'scenery' : 'landscape'); // search anything: city, ocean, cat...
+    if (!q) { startFeed(curatedFor(cat), TAB_QUERY[cat]); return; } // empty search goes back to the default wall
     try {
-      const r = await searchPhotos(query);
+      const r = await searchPhotos(q, 1);
       if (!r.ok) throw new Error(r.status);
       const j = await r.json();
-      if (!j.results.length) { alert('No photos found for "' + query + '". Try another word.'); return; }
-      items = j.results.map(p => ({ thumb: p.urls.thumb, board: p.urls.small, full: p.urls.regular, cat: null,
-        name: p.user.name, profile: p.user.links.html, dl: p.links.download_location }));
+      if (!j.results.length) { alert('No photos found for "' + q + '". Try another word.'); return; }
       cat = 'all'; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.cat === 'all'));
-      renderThumbs();
+      resetWall(); addTiles(j.results.map(fromApi), false); centerWorld();
+      const f = feed = { query: q, page: 1, more: j.results.length >= PAGE_SIZE && 1 < j.total_pages, loading: false };
+      if (f.more) await loadMore(true);
     } catch (err) { alert('Search failed (' + err.message + '). Try again in a moment.'); }
   });
-  renderThumbs();
+  startFeed(CURATED, TAB_QUERY.all);
   $('file').addEventListener('change', e => load(e.target.files[0]));
   for (const drop of [$('drop'), $('board')]) {
     ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));

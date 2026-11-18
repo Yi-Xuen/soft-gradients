@@ -1,5 +1,5 @@
 // Cloudflare Worker: a tiny proxy so the Unsplash Access Key never ships in the page.
-// Routes:  GET /search?q=...             -> Unsplash photo search (cached 1h)
+// Routes:  GET /search?q=...&page=1      -> Unsplash photo search, 30 per page (cached 1h)
 //          GET /download?loc=<url>       -> pings a photo's download_location (Unsplash download tracking)
 // The key lives in a Worker secret named UNSPLASH_ACCESS_KEY (see worker/README.md).
 
@@ -25,7 +25,8 @@ export default {
     if (url.pathname === '/search') {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 100);
       if (!q) return new Response('Missing q', { status: 400, headers: cors });
-      const upstream = `${API}/search/photos?per_page=30&content_filter=high&query=${encodeURIComponent(q)}`;
+      const page = Math.min(20, Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1));
+      const upstream = `${API}/search/photos?per_page=30&content_filter=high&page=${page}&query=${encodeURIComponent(q)}`;
       const cache = caches.default, key = new Request(upstream);
       let res = await cache.match(key);
       if (!res) {
