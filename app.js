@@ -92,13 +92,19 @@
     draw();
   }
 
+  // neutral ink for text sitting on a colour: near-black on light colours, white on dark ones (never a tinted colour)
+  function inkOn(h) {
+    const n = parseInt(h.slice(1), 16), lin = c => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; };
+    const L = .2126 * lin(n >> 16 & 255) + .7152 * lin(n >> 8 & 255) + .0722 * lin(n & 255);
+    return L > .179 ? 'rgba(20,20,20,.72)' : 'rgba(255,255,255,.9)';
+  }
   function buildSwatches() {
     closePicker();
     const box = $('swatches'); box.innerHTML = '';
     state.palette.forEach((lab, i) => {
       const h = hex(lab), d = document.createElement('div');
       d.className = 'sw'; d.style.background = h; d.tabIndex = 0; d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Edit colour ' + h);
-      d.innerHTML = `<span>${h}</span>`;
+      d.innerHTML = `<span>${h}</span>`; d.firstChild.style.color = inkOn(h);
       d.addEventListener('click', () => (pk.i === i && !$('picker').hidden) ? closePicker() : openPicker(i, d));
       d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); d.click(); } });
       box.appendChild(d);
@@ -160,7 +166,7 @@
     if (pk.i >= 0 && state.palette[pk.i]) {
       state.palette[pk.i] = rgb2lab(...rgb);
       const sw = $('swatches').children[pk.i];
-      if (sw) { sw.style.background = h; sw.querySelector('span').textContent = h; }
+      if (sw) { sw.style.background = h; const sp = sw.querySelector('span'); sp.textContent = h; sp.style.color = inkOn(h); }
       cancelAnimationFrame(pkDrawRaf); pkDrawRaf = requestAnimationFrame(draw);
     }
   }
@@ -295,22 +301,20 @@
   function draw() {
     if (!state.hasImage) return;
     const ratio = +$('ratio').value, st = document.querySelector('.stage');
-    const narrow = window.innerWidth <= 640;
-    // wide ratios (16:9) stack the photo above the gradient instead of side by side
-    const stacked = !narrow && ratio > 1.2;
+    // wide ratios (16:9) stack the photo above the gradient; everything else sits side by side, phones included
+    const stacked = ratio > 1.2;
     st.classList.toggle('stacked', stacked);
     let w, h;
     if (stacked) { h = Math.min(st.clientWidth / ratio, 360); w = h * ratio; }
     else {
-      const availW = narrow ? st.clientWidth : st.clientWidth / 2;
-      const availH = narrow ? window.innerHeight * .5 : Math.min(window.innerHeight * .7, 640);
+      const availW = st.clientWidth / 2, availH = Math.min(window.innerHeight * .7, 640);
       h = Math.min(availH, availW / ratio); w = h * ratio;
     }
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     render(Math.round(w * dpr), Math.round(h * dpr), canvas);
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     // photo panel and gradient panel share the exact same size; stage hugs them
-    st.style.height = narrow ? 'auto' : (stacked ? h * 2 : h) + 'px';
+    st.style.height = (stacked ? h * 2 : h) + 'px';
     for (const el of [$('drop'), canvas.parentElement]) {
       el.style.flex = 'none'; el.style.width = w + 'px'; el.style.height = h + 'px';
     }
@@ -456,7 +460,7 @@
     ? fetch(`https://api.unsplash.com/search/photos?per_page=30&content_filter=high&page=${page}&query=${encodeURIComponent(q)}`, devAuth)
     : fetch(`${PROXY}/search?q=${encodeURIComponent(q)}&page=${page}`);
   const pingDownload = loc => DEV_KEY ? fetch(loc, devAuth) : fetch(`${PROXY}/download?loc=${encodeURIComponent(loc)}`);
-  const UTM = 'utm_source=soft_gradients&utm_medium=referral';
+  const UTM = 'utm_source=fluid_hues&utm_medium=referral';
   const withUtm = u => u + (u.includes('?') ? '&' : '?') + UTM;
   const link = (href, text) => { const x = document.createElement('a'); x.href = withUtm(href); x.target = '_blank'; x.rel = 'noopener'; x.textContent = text; return x; };
   // "Photo by <name> on Unsplash" (or "Photo from Unsplash" for the curated set, whose photographers we don't have)
@@ -507,13 +511,14 @@
   // first free spot along a spiral from the centre, so the wall keeps growing into a rough circle.
   function addTiles(list, animate = true) {
     const rnd = i => ((Math.imul(i + 1, 2654435761) >>> 0) % 1000) / 1000;
+    const sc = Math.min(1, Math.max(.58, (Math.min(window.innerWidth, 1180) - 32) / 760)), gap = Math.round(GAP * sc); // smaller tiles on phones
     const batch = list.filter(p => p.id && !shown.has(p.id)).slice(0, Math.max(0, MAX_TILES - wall.n));
     const sized = batch.map(p => {
       const k = wall.n++; shown.add(p.id);
-      const w = WIDTHS[Math.floor(rnd(k * 3 + 1) * WIDTHS.length)], ar = RATIOS[Math.floor(rnd(k * 3 + 2) * RATIOS.length)];
+      const w = Math.round(WIDTHS[Math.floor(rnd(k * 3 + 1) * WIDTHS.length)] * sc), ar = RATIOS[Math.floor(rnd(k * 3 + 2) * RATIOS.length)];
       return { p, w, h: Math.round(w / ar) };
     }).sort((a, b) => b.w * b.h - a.w * a.h);
-    const free = (x, y, w, h) => wall.placed.every(q => x + w + GAP <= q.x || q.x + q.w + GAP <= x || y + h + GAP <= q.y || q.y + q.h + GAP <= y);
+    const free = (x, y, w, h) => wall.placed.every(q => x + w + gap <= q.x || q.x + q.w + gap <= x || y + h + gap <= q.y || q.y + q.h + gap <= y);
     for (const s of sized) {
       let pos = wall.placed.length ? null : { x: -s.w / 2, y: -s.h / 2 };
       for (let r = Math.max(20, wall.r - 140), a0 = wall.placed.length * 2.399963; !pos; r += 10) {
@@ -636,7 +641,14 @@
     drop.addEventListener('drop', e => load(e.dataTransfer.files[0]));
   }
   window.addEventListener('paste', e => { const f = [...e.clipboardData.files][0]; if (f) load(f); });
-  window.addEventListener('resize', draw);
+  // On touch devices the browser bar sliding in and out while you scroll fires 'resize' with only the height changed.
+  // Re-rendering then makes the images jump, so only react to real width changes there.
+  let lastW = window.innerWidth;
+  const touch = window.matchMedia('(pointer: coarse)');
+  window.addEventListener('resize', () => {
+    if (touch.matches && window.innerWidth === lastW) return;
+    lastW = window.innerWidth; draw();
+  });
   // redraw once the web fonts are ready so canvas labels use them
   if (document.fonts) Promise.all([document.fonts.load('400 20px "Sorts Mill Goudy"'), document.fonts.load('500 12px "Open Sans"')]).then(draw).catch(() => {});
 

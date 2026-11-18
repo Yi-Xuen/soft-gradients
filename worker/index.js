@@ -3,7 +3,7 @@
 //          GET /download?loc=<url>       -> pings a photo's download_location (Unsplash download tracking)
 // The key lives in a Worker secret named UNSPLASH_ACCESS_KEY (see worker/README.md).
 
-const ALLOWED_ORIGINS = ['https://yi-xuen.github.io', 'http://localhost:8765'];
+const ALLOWED_ORIGINS = ['https://fluid-hue.vercel.app', 'https://yi-xuen.github.io', 'http://localhost:8765'];
 const API = 'https://api.unsplash.com';
 // download_location values look like https://api.unsplash.com/photos/<id>/download?ixid=...
 const DOWNLOAD_RE = /^https:\/\/api\.unsplash\.com\/photos\/[A-Za-z0-9_-]+\/download(\?[A-Za-z0-9_=&%.-]*)?$/;

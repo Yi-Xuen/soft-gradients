@@ -1,4 +1,4 @@
-# Soft Gradients
+# Fluid Hues
 
 Turn a nature photo into a soft, fluid gradient. Pick a photo from the built-in Unsplash wall (or upload your own), tweak the colors, smoothness and warp, and export a PNG named after the palette, e.g. `Gradient - Dune Ember.png`.
 

@@ -2,11 +2,10 @@
 @media (prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#999;--card:#222;--line:#333}}
 *{box-sizing:border-box}
 :root{--serif:"Sorts Mill Goudy",Georgia,serif;--sans:"Open Sans",-apple-system,"Helvetica Neue",sans-serif}
-html{scrollbar-gutter:stable}
+html{scrollbar-gutter:stable;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 var(--sans)}
 main{max-width:1180px;margin:0 auto;padding:32px 16px 64px;position:relative}
-h1{font-family:var(--serif);font-size:34px;line-height:1.1;font-weight:400;margin:0 0 6px}
-header p{margin:0;color:var(--mut)}
+h1{font-family:var(--serif);font-size:36px;line-height:1.1;font-weight:400;margin:0}
 .stage{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:0;height:min(70vh,640px)}
 .stage.stacked{flex-direction:column;align-items:flex-start;justify-content:flex-start}
 .drop,.out{flex:1;height:100%;position:relative;background:var(--card);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
@@ -23,12 +22,22 @@ header p{margin:0;color:var(--mut)}
 #orig:not([hidden])+#dropHint{display:none}
 .out{background:transparent}
 #gl{max-width:100%;max-height:100%;display:block}
-body.empty .editor,body.empty .thumbs,body:not(.empty) .gallery,body.empty .change{display:none}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px}
-.change{white-space:nowrap}
+body.empty .editor,body.empty .thumbs,body:not(.empty) .gallery{display:none}
+/* ---- header: brand row, then the page title (with a back button once a photo is chosen) and search ---- */
+header{display:grid;gap:20px;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:10px;font:400 19px/1 var(--serif);letter-spacing:.01em}
+.brand img{display:block;width:28px;height:28px}
+.titleRow{display:flex;align-items:center;gap:14px;min-height:44px}
+.titles{display:grid;flex:1;min-width:0}
+.t{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s}
+body.empty .t-pick,body:not(.empty) .t-edit{opacity:1;visibility:visible;transition:opacity .35s ease .1s,visibility 0s}
+.backBtn{flex:none;display:grid;place-items:center;width:40px;height:40px;min-width:0;max-width:44px;padding:0;border-radius:50%;overflow:hidden;
+  transition:max-width .35s ease,margin .35s ease,opacity .3s ease,border-width .35s ease,background .15s}
+.backBtn:hover{background:rgba(128,128,128,.16)}
+body.empty .backBtn{max-width:0;margin-right:-14px;border-width:0;opacity:0;pointer-events:none;visibility:hidden;transition:max-width .35s ease,margin .35s ease,opacity .25s ease,border-width .35s ease,visibility 0s linear .35s}
 .boardBack{display:none;position:absolute;top:14px;left:14px;z-index:1;border:0;background:rgba(20,20,20,.7);color:#fff;border-radius:999px;font-size:12px;padding:6px 12px;backdrop-filter:blur(8px)}
 body.has .boardBack{display:block}
-.board{position:relative;height:min(70vh,640px);overflow:hidden;background:var(--card);border-radius:8px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.board{position:relative;height:min(70vh,640px);height:min(70svh,640px);overflow:hidden;background:var(--card);border-radius:8px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 .board.drag{cursor:grabbing}
 .board{transition:opacity .3s ease}
 .board.fade{opacity:0;pointer-events:none}
@@ -39,18 +48,18 @@ body.has .boardBack{display:block}
 .flyer.go{border-radius:0;box-shadow:0 0 0 rgba(0,0,0,0)}
 body.flying .drop{background:transparent}
 body.flying #dropHint{visibility:hidden}
-.out,.panel,.change,.swatches,.photoCredit,.drop{transition:opacity .7s ease,transform .7s cubic-bezier(.22,.8,.2,1)}
-.out,.drop{transition-delay:.05s}.swatches{transition-delay:.15s}.panel{transition-delay:.2s}.change{transition-delay:.1s}
-body.entering .out,body.entering .panel,body.entering .change,body.entering .swatches{opacity:0;transform:translateY(10px)}
+.out,.panel,.swatches,.photoCredit,.drop{transition:opacity .7s ease,transform .7s cubic-bezier(.22,.8,.2,1)}
+.out,.drop{transition-delay:.05s}.swatches{transition-delay:.15s}.panel{transition-delay:.2s}
+body.entering .out,body.entering .panel,body.entering .swatches{opacity:0;transform:translateY(10px)}
 body.entering .photoCredit,body.flying .photoCredit{opacity:0}
 body.entering .glow{opacity:0}
 body.flying #orig{opacity:0}
 /* leaving the editor: it slides down while fading, then the wall fades in */
 body.slideout .editor{opacity:0;transform:translateY(48px);pointer-events:none;will-change:transform,opacity;
   transition:opacity .48s cubic-bezier(.4,0,1,1),transform .48s cubic-bezier(.4,0,.2,1)}
-body.slideout .change{opacity:0;transition:opacity .48s cubic-bezier(.4,0,1,1)}
+body.slideout .backBtn{opacity:0;transition:opacity .48s cubic-bezier(.4,0,1,1)}
 body.wallin .board{transition:opacity .56s ease}
-@media (prefers-reduced-motion:reduce){.board,.flyer.go,.out,.drop,.panel,.change,.swatches,.editor{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.board,.flyer.go,.out,.drop,.panel,.backBtn,.t,.swatches,.editor{transition:none!important}}
 .board.over{outline:2px dashed var(--mut);outline-offset:-8px}
 .world{position:absolute;left:0;top:0;will-change:transform}
 .tile{position:absolute;border-radius:12px;overflow:hidden;border:0;padding:0;background:var(--line);cursor:inherit;
@@ -65,7 +74,8 @@ body.wallin .board{transition:opacity .56s ease}
 .gtop{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .tabs{display:flex;gap:6px}
 .tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.search{display:flex;gap:6px;position:relative}
+.search{display:flex;gap:6px;position:relative;flex:none;margin-left:auto;transition:opacity .3s ease .1s}
+body:not(.empty) .search{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .25s}
 .search[hidden]{display:none}
 .search input{font:inherit;padding:6px 14px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;min-width:220px}
 .search input{transition:border-color .15s;padding-left:38px}
@@ -99,7 +109,7 @@ body.wallin .board{transition:opacity .56s ease}
 .swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
 .sw{position:relative;width:84px;height:84px;border-radius:6px;border:1px solid var(--line);cursor:pointer;overflow:hidden}
 .sw input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.sw span{position:absolute;left:6px;bottom:4px;font:500 10px var(--sans);letter-spacing:.04em;mix-blend-mode:difference;color:#fff;pointer-events:none}
+.sw span{position:absolute;left:6px;bottom:4px;font:500 10px var(--sans);letter-spacing:.04em;pointer-events:none}
 .controls{display:grid;gap:16px}
 .controls label{display:grid;gap:4px;color:var(--mut);font-size:12px}
 .controls .row{display:flex;justify-content:space-between;align-items:baseline}
@@ -113,7 +123,6 @@ button.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .buttons .ic{flex:none}
 .buttons .primary{padding:10px 14px}
 @media (max-width:900px){.editor{grid-template-columns:1fr}}
-@media (max-width:640px){.stage{flex-direction:column;align-items:center;height:auto}.drop,.out{width:100%;height:50vh}.drop{border-radius:6px 6px 0 0}.out{border-radius:0 0 6px 6px}}
 
 /* ---- sliders + switches: slim 2px track, ink-coloured ---- */
 .controls input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;margin:0;background:transparent;cursor:pointer}
@@ -180,3 +189,51 @@ select{-webkit-appearance:none;appearance:none;padding-right:38px;cursor:pointer
 .picker .pkIcon{display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--fg)}
 .picker .pkIcon:hover{background:rgba(128,128,128,.16)}
 .pkPrev{border-radius:10px;border:1px solid var(--line)}
+
+/* ================= small screens + touch ================= */
+@media (max-width:640px){
+  main{padding:20px 16px 40px}
+  header{gap:14px;margin-bottom:16px}
+  h1{font-size:26px}
+  .brand{font-size:17px}.brand img{width:24px;height:24px}
+  /* title (and back button) on one row; search drops to its own full-width row on the wall */
+  .titleRow{flex-wrap:wrap;gap:10px 12px}
+  .search{flex:1 1 100%;order:3;margin-left:0;width:100%}
+  body:not(.empty) .search{display:none}
+  /* gallery controls: tabs scroll sideways, search takes its own full-width row */
+  .gtop{flex-direction:column;align-items:stretch;gap:10px}
+  .tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:none}
+  .search input{width:100%;min-width:0}
+  .boardHint{display:none}
+  .stage.stacked~.swatches,.swatches{gap:8px}
+  .sw{width:calc((100% - 24px) / 4);height:auto;aspect-ratio:1;max-width:96px}
+  .panel{padding:16px;border-radius:14px}
+  .tileCredit{font-size:10px;padding:20px 8px 6px}
+  .photoCredit{font-size:10px;line-height:1.35;padding:22px 8px 8px}
+}
+@media (max-width:640px),(pointer:coarse){
+  /* everything you tap is at least 44px tall; text fields are 16px so iOS doesn't zoom in on focus */
+  button,select,.tabs button{min-height:44px}
+  .backBtn{width:44px;height:44px}
+  .tabs button{padding:0 18px}
+  select,.search input,.picker .pkVal{min-height:44px;font-size:16px}
+  .panel .reset{min-height:44px;padding:0 14px;margin-right:-14px}
+  .controls .switch{min-height:44px}
+  .controls .switch input::before{content:"";position:absolute;inset:-11px -10px} /* the track itself stays 38x22; the tappable area is 44px tall */
+  .controls input[type=range]{height:44px}
+  .controls input[type=range]::-webkit-slider-thumb{width:22px;height:22px;margin-top:-10px}
+  .controls input[type=range]::-moz-range-thumb{width:22px;height:22px}
+  .copyHex{min-height:44px;padding:0 12px}
+  .buttons button{min-height:48px}
+  .photoCredit a,.tileCredit a{padding:14px 3px;margin:0 -3px} /* inline credit links: bigger tappable area, same look */
+  .boardBack,.boardUpload{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;font-size:13px;bottom:auto}
+  .boardUpload{bottom:12px}
+  .boardBack{top:12px;left:12px}
+  body:not(.has) .boardBack{display:none}
+  .picker .pkFmt{min-height:44px;padding:0 14px}
+  .pkRow{grid-template-columns:44px 44px 1fr;height:44px}
+  .pkRow.noeye{grid-template-columns:44px 1fr}
+  .pkHue{height:14px;margin:12px 0 8px}
+}
