@@ -1,23 +1,25 @@
 # Fluid Hues
 
-Turn a nature photo into a soft, fluid gradient. Pick a photo from the built-in Unsplash wall (or upload your own), tweak the colors, smoothness and warp, and export a PNG named after the palette, e.g. `Gradient - Dune Ember.png`.
+Turn a photo into a soft, fluid gradient. Pick from a wall of landscape photos (or upload your own), tweak it, and export a PNG.
 
-No build step and no dependencies. Serve the folder and open it in a browser:
+**[Try it live →](https://fluid-hue.vercel.app)**
 
-```bash
-python3 -m http.server 8765
-```
+<!-- Suggested: one screenshot or short GIF of the wall → editor transition -->
 
-Then visit <http://localhost:8765>.
+## Design decisions
 
-## How it works
+- **Gradients that feel organic, not linear.** Colours come from the photo itself, and the shape is warped so it reads like light through fog rather than a stripe.
+- **A photo wall instead of an upload form.** Most people have no image on hand, so the first screen is a draggable, circular wall of photos that keeps loading as you explore, with search for anything else.
+- **One decision at a time.** Choose a photo, then adjust. The transitions between the two steps are choreographed and respect reduced-motion settings.
+- **Works with a thumb.** Phone layouts keep the photo and gradient side by side, every control is at least 44px, and nothing re-renders when the browser bar collapses.
+- **Names, not hex codes alone.** Each palette gets a generated name ("Straw Olive", "Cloud Moss") that is baked into the exported image.
 
-- The photo is reduced to a few dominant colors (k-means in OKLab) and a coarse 6×8 grid of cell colors.
-- A WebGL shader blends the grid smoothly and bends it with simplex-noise warping, plus a little grain to avoid banding.
-- The title is generated from the palette's lightest and darkest colors.
+## Under the hood
 
-## Unsplash
+- Palette extraction with k-means in OKLab, so colours are chosen by how they look, not by their RGB values
+- A WebGL fragment shader with bicubic sampling, simplex-noise domain warping and grain to prevent banding
+- No framework or build step: plain HTML, CSS and JavaScript
+- A small Cloudflare Worker proxies Unsplash search, keeping the API key off the client and caching results
+- Follows Unsplash's API guidelines: hotlinked images, photographer credit on every photo, and download tracking
 
-The photo wall works out of the box. Photos are hotlinked from Unsplash, credited to their photographers with links back to Unsplash, and picking one triggers Unsplash's download endpoint, as the [API guidelines](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines) ask.
-
-Live search and download tracking go through a small proxy that holds the Access Key, so visitors never need their own key. See [worker/README.md](worker/README.md) to deploy it, then set `PROXY` in `app.js`.
+Photos from [Unsplash](https://unsplash.com/?utm_source=fluid_hues&utm_medium=referral).
