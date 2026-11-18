@@ -24,6 +24,7 @@
   <div class="editor">
     <div class="left">
     <div class="stage">
+      <div id="glow" class="glow" aria-hidden="true"></div>
       <label id="drop" class="drop" for="file">
         <div id="orig" role="img" aria-label="Uploaded photo" hidden></div>
         <span id="dropHint">Drop image or click to upload</span>
@@ -86,7 +87,8 @@
         <button type="button" data-cat="wallpaper">Scenery</button>
       </div>
       <form id="searchForm" class="search" hidden>
-        <input id="q" type="search" placeholder="Search photos, e.g. city" aria-label="Search photos">
+        <svg class="searchIc" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="search" placeholder="Search" aria-label="Search photos">
       </form>
     </div>
     <div id="board" class="board" aria-label="Photo wall: drag to explore, click a photo to use it">

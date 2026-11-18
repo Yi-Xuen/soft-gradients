@@ -314,6 +314,20 @@
     for (const el of [$('drop'), canvas.parentElement]) {
       el.style.flex = 'none'; el.style.width = w + 'px'; el.style.height = h + 'px';
     }
+    placeGlow();
+  }
+
+  // ambient glow: a heavily blurred copy of the original photo sits just behind both panels, so its colours
+  // spill very faintly past their edges
+  const GLOW_REACH = 14; // stays inside main's 16px side padding so it never causes sideways scrolling
+  function placeGlow() {
+    const g = $('glow'), a = $('drop'), b = canvas.parentElement;
+    if (!g || !a.offsetWidth) return;
+    const left = Math.min(a.offsetLeft, b.offsetLeft), top = Math.min(a.offsetTop, b.offsetTop);
+    const right = Math.max(a.offsetLeft + a.offsetWidth, b.offsetLeft + b.offsetWidth);
+    const bottom = Math.max(a.offsetTop + a.offsetHeight, b.offsetTop + b.offsetHeight);
+    Object.assign(g.style, { left: left - GLOW_REACH + 'px', top: top - GLOW_REACH + 'px',
+                             width: right - left + GLOW_REACH * 2 + 'px', height: bottom - top + GLOW_REACH * 2 + 'px' });
   }
 
   // ---- loading ----
@@ -323,6 +337,7 @@
     if (cors) img.crossOrigin = 'anonymous';
     img.onload = () => {
       $('orig').style.backgroundImage = `url("${url}")`; $('orig').hidden = false; state.url = url;
+      $('glow').style.backgroundImage = `url("${url}")`;
       if (fly) fly(img); else showEditor(img);
     };
     img.onerror = () => {
@@ -332,28 +347,27 @@
     img.src = url;
   }
 
-  // ---- editor -> wall transition: everything moves at once. The wall fades in underneath the editor while
-  // the photo, gradient and controls all fade out together ----
+  // ---- editor -> wall transition, in two beats: the photo, gradient and controls slide down while fading out,
+  // then the wall fades in with the photo's own tile in the middle ----
+  const SLIDE = 480, WALL_IN = 560;
   function leaveEditor() {
     if (busy) return; busy = true; closePicker();
-    const gal = document.querySelector('.gallery'), ed = document.querySelector('.editor');
-    // lay the wall exactly where the editor is, so the swap at the end doesn't move anything
-    Object.assign(gal.style, { top: ed.offsetTop + 'px', left: ed.offsetLeft + 'px', width: ed.offsetWidth + 'px' });
-    board.classList.add('fade');
-    document.body.classList.add('leaving', 'entering'); // wall shown; photo, gradient + controls start fading out
-    board.offsetWidth; // commit layout so the wall can be measured
-    const tile = [...worldEl.children].find(t => t.dataset.full === state.url);
-    if (tile) { // open the wall with the photo's own tile in the middle
-      px = board.clientWidth / 2 - (parseFloat(tile.style.left) + tile.offsetWidth / 2);
-      py = board.clientHeight / 2 - (parseFloat(tile.style.top) + tile.offsetHeight / 2);
-    }
-    place();
-    board.classList.remove('fade'); // wall fades in as the editor fades out
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
+    document.body.classList.add('slideout');
     setTimeout(() => {
-      gal.removeAttribute('style');
-      document.body.classList.add('empty');
-      document.body.classList.remove('leaving', 'entering'); busy = false;
-    }, REDUCED ? 0 : 920);
+      board.classList.add('fade'); // wall starts invisible
+      document.body.classList.add('empty', 'wallin');
+      document.body.classList.remove('slideout');
+      const tile = [...worldEl.children].find(t => t.dataset.full === state.url);
+      if (tile) { // open the wall with the photo's own tile in the middle
+        px = board.clientWidth / 2 - (parseFloat(tile.style.left) + tile.offsetWidth / 2);
+        py = board.clientHeight / 2 - (parseFloat(tile.style.top) + tile.offsetHeight / 2);
+      }
+      place();
+      board.offsetWidth; // commit the hidden start frame
+      board.classList.remove('fade');
+      setTimeout(() => { document.body.classList.remove('wallin'); busy = false; }, REDUCED ? 0 : WALL_IN);
+    }, REDUCED ? 0 : SLIDE);
   }
 
   // ---- wall -> editor transition: picked photo grows into the preview panel, then the rest fades in ----
@@ -378,6 +392,7 @@
         fl.style.backgroundImage = `url("${p.full}")`;
         fl.offsetWidth; // commit start frame
         fl.classList.add('go');
+        fl.style.borderRadius = getComputedStyle($('drop')).borderRadius; // lands with the panel's rounded outer corners
         Object.assign(fl.style, { left: to.left + 'px', top: to.top + 'px', width: to.width + 'px', height: to.height + 'px' });
         setTimeout(() => {
           document.body.classList.remove('flying'); fl.remove(); board.classList.remove('fade');
