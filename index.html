@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soft Gradients</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy&family=Open+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="empty">
+<input id="file" type="file" accept="image/*" hidden>
+<main>
+  <header>
+    <div>
+      <h1>Soft Gradients</h1>
+      <p>Drop a nature photo. Get a fluid gradient from its colors.</p>
+    </div>
+    <button type="button" id="change" class="change">Choose another image</button>
+  </header>
+
+  <div class="editor">
+    <div class="left">
+    <div class="stage">
+      <label id="drop" class="drop" for="file">
+        <div id="orig" role="img" aria-label="Uploaded photo" hidden></div>
+        <span id="dropHint">Drop image or click to upload</span>
+      </label>
+      <div class="out">
+        <canvas id="gl"></canvas>
+      </div>
+    </div>
+    <div id="swatches" class="swatches"></div>
+    </div>
+
+    <aside class="panel" aria-label="Gradient controls">
+      <div class="panelHead">
+        <h2>Adjust gradient</h2>
+        <button type="button" id="reset" class="reset" title="Restore default settings">Reset</button>
+      </div>
+      <div class="controls">
+        <label><span class="row"><span>Colors</span><output id="oColors">3</output></span><input id="colors" type="range" min="3" max="8" value="3"></label>
+        <label><span class="row"><span>Smoothness</span><output id="oSmooth">100</output></span><input id="smooth" type="range" min="0" max="200" value="100"></label>
+        <label><span class="row"><span>Fluid warp</span><output id="oWarp">100</output></span><input id="warp" type="range" min="0" max="200" value="100"></label>
+        <label><span class="row"><span>Grain</span><output id="oGrain">25</output></span><input id="grain" type="range" min="0" max="100" value="25"></label>
+        <label class="switch"><span>Show title</span><input id="showTitle" type="checkbox" checked></label>
+        <div class="switch hexRow">
+          <span class="swText">
+            <label for="showHex">Show hex codes</label>
+            <button id="copy" class="copyHex" type="button" title="Copy hex codes"><svg class="ic" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy hex</span></button>
+          </span>
+          <input id="showHex" type="checkbox" checked>
+        </div>
+        <label>Ratio
+          <select id="ratio">
+            <option value="0.8">4:5</option>
+            <option value="1">1:1</option>
+            <option value="0.5625">9:16</option>
+            <option value="1.7778">16:9</option>
+          </select>
+        </label>
+        <label>Export
+          <select id="size">
+            <option value="1080">1080px</option>
+            <option value="2160">2160px</option>
+            <option value="3840">3840px</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="buttons">
+        <button id="reroll" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></svg><span>Re-roll shape</span></button>
+        <button id="save" type="button" class="primary"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg><span>Download PNG</span></button>
+      </div>
+    </aside>
+  </div>
+
+  <section class="gallery">
+    <div class="gtop">
+      <div class="tabs" id="tabs">
+        <button type="button" data-cat="all" class="on">All</button>
+        <button type="button" data-cat="nature">Nature</button>
+        <button type="button" data-cat="wallpaper">Wallpaper</button>
+      </div>
+      <form id="searchForm" class="search">
+        <input id="q" type="search" placeholder="Search Unsplash (needs API key)" aria-label="Search Unsplash">
+        <button type="button" id="keyBtn" title="Set Unsplash API key">Key</button>
+      </form>
+    </div>
+    <div id="board" class="board" aria-label="Photo wall: drag to explore, click a photo to use it">
+      <div id="world" class="world"></div>
+      <span class="boardHint">Drag to explore · click a photo</span>
+      <button type="button" id="back" class="boardBack">← Back to my gradient</button>
+      <label class="boardUpload" for="file">Upload your own</label>
+    </div>
+    <div id="thumbs" class="thumbs"></div>
+    <p class="credit">Photos from <a href="https://unsplash.com/?utm_source=soft_gradients&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
+  </section>
+
+</main>
+<div id="picker" class="picker" hidden role="dialog" aria-label="Colour picker">
+  <div id="pkSV" class="pkSV"><div id="pkSVh" class="pkSVh"></div></div>
+  <div id="pkHue" class="pkHue"><div id="pkHueh" class="pkHueh"></div></div>
+  <button type="button" id="pkFmt" class="pkFmt" title="Change colour format"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg><span id="pkFmtL">HEX</span></button>
+  <input id="pkVal" class="pkVal" spellcheck="false" autocomplete="off" aria-label="Colour value">
+  <div id="pkRow" class="pkRow">
+    <button type="button" id="pkCopy" class="pkIcon" title="Copy value"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    <button type="button" id="pkEye" class="pkIcon" title="Pick colour from screen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg></button>
+    <div id="pkPrev" class="pkPrev"></div>
+  </div>
+</div>
+<script src="gradient.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
