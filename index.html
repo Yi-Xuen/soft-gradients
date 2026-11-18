@@ -85,16 +85,13 @@
   </div>
 
   <section class="gallery">
-    <div class="gtop">
+    <div id="board" class="board" aria-label="Photo wall: drag to explore, click a photo to use it">
+      <div id="world" class="world"></div>
       <div class="tabs" id="tabs">
         <button type="button" data-cat="all" class="on">All</button>
         <button type="button" data-cat="nature">Nature</button>
         <button type="button" data-cat="wallpaper">Scenery</button>
       </div>
-
-    </div>
-    <div id="board" class="board" aria-label="Photo wall: drag to explore, click a photo to use it">
-      <div id="world" class="world"></div>
       <span class="boardHint">Drag to explore · click a photo</span>
       <button type="button" id="back" class="boardBack">← Back to my gradient</button>
       <label class="boardUpload" for="file">Upload your own</label>

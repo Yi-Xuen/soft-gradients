@@ -594,7 +594,7 @@
     raf = Math.abs(vx) + Math.abs(vy) > .3 ? requestAnimationFrame(glide) : 0;
   }
   board.addEventListener('pointerdown', e => {
-    if (e.button !== 0 || e.target.closest('.boardUpload, .boardBack')) return;
+    if (e.button !== 0 || e.target.closest('.boardUpload, .boardBack, .tabs')) return;
     cancelAnimationFrame(raf); down = { x: e.clientX, y: e.clientY }; panMoved = 0; vx = vy = 0;
   });
   window.addEventListener('pointermove', e => {

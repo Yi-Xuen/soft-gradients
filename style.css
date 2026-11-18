@@ -25,17 +25,18 @@ h1{font-family:var(--serif);font-size:36px;line-height:1.1;font-weight:400;margi
 body.empty .editor,body.empty .thumbs,body:not(.empty) .gallery{display:none}
 /* ---- header: brand row, then the page title (with a back button once a photo is chosen) and search ---- */
 header{display:grid;gap:20px;margin-bottom:24px}
-.brand{display:flex;align-items:center;gap:10px;font:400 19px/1 var(--serif);letter-spacing:.01em}
-.brand img{display:block;width:28px;height:28px}
+.brand{display:flex;align-items:center;gap:10px;font:400 22px/1 var(--serif);letter-spacing:.01em}
+/* logo is 1.3x the text size and centred on the lettering's ink (the lettering sits .12em above its line box's centre) */
+.brand img{display:block;flex:none;width:1.3em;height:1.3em;transform:translateY(-.12em)}
 .titleRow{display:flex;align-items:center;gap:14px;min-height:44px}
-.titles{display:grid;flex:1;min-width:0}
+.titles{display:grid;flex:1;min-width:0;position:relative;top:.033em} /* optical centring: this serif's capitals sit high in its line box */
 .t{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s}
 body.empty .t-pick,body:not(.empty) .t-edit{opacity:1;visibility:visible;transition:opacity .35s ease .1s,visibility 0s}
 .backBtn{flex:none;display:grid;place-items:center;width:40px;height:40px;min-width:0;max-width:44px;padding:0;border-radius:50%;overflow:hidden;
   transition:max-width .35s ease,margin .35s ease,opacity .3s ease,border-width .35s ease,background .15s}
 .backBtn:hover{background:rgba(128,128,128,.16)}
 body.empty .backBtn{max-width:0;margin-right:-14px;border-width:0;opacity:0;pointer-events:none;visibility:hidden;transition:max-width .35s ease,margin .35s ease,opacity .25s ease,border-width .35s ease,visibility 0s linear .35s}
-.boardBack{display:none;position:absolute;top:14px;left:14px;z-index:1;border:0;background:rgba(20,20,20,.7);color:#fff;border-radius:999px;font-size:12px;padding:6px 12px;backdrop-filter:blur(8px)}
+.boardBack{display:none;position:absolute;top:14px;right:14px;z-index:1;border:0;background:rgba(20,20,20,.7);color:#fff;border-radius:999px;font-size:12px;padding:6px 12px;backdrop-filter:blur(8px)}
 body.has .boardBack{display:block}
 .board{position:relative;height:min(70vh,640px);height:min(70svh,640px);overflow:hidden;background:var(--card);border-radius:8px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 .board.drag{cursor:grabbing}
@@ -71,9 +72,11 @@ body.wallin .board{transition:opacity .56s ease}
 .boardHint{left:14px;pointer-events:none}
 .boardUpload{right:14px;cursor:pointer}
 .gallery{margin-top:20px;display:grid;gap:10px}
-.gtop{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.tabs{display:flex;gap:6px}
-.tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tabs{position:absolute;top:14px;left:14px;z-index:2;display:flex;gap:6px}
+.tabs button{background:rgba(20,20,20,.7);color:#fff;border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 1px 2px rgba(0,0,0,.14),0 4px 14px rgba(0,0,0,.2)} /* soft two-layer shadow so the pills lift off any photo */
+.tabs button:hover{background:rgba(20,20,20,.85)}
+.tabs button.on{background:#f2f2f2;color:#161616;border-color:rgba(0,0,0,.1)}
 .search{display:flex;gap:6px;position:relative;flex:none;margin-left:auto;transition:opacity .3s ease .1s}
 body:not(.empty) .search{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .25s}
 .search[hidden]{display:none}
@@ -195,14 +198,13 @@ select{-webkit-appearance:none;appearance:none;padding-right:38px;cursor:pointer
   main{padding:20px 16px 40px}
   header{gap:14px;margin-bottom:16px}
   h1{font-size:26px}
-  .brand{font-size:17px}.brand img{width:24px;height:24px}
+  .brand{font-size:20px}
   /* title (and back button) on one row; search drops to its own full-width row on the wall */
   .titleRow{flex-wrap:wrap;gap:10px 12px}
   .search{flex:1 1 100%;order:3;margin-left:0;width:100%}
   body:not(.empty) .search{display:none}
   /* gallery controls: tabs scroll sideways, search takes its own full-width row */
-  .gtop{flex-direction:column;align-items:stretch;gap:10px}
-  .tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+  .tabs{top:12px;left:12px;right:12px;gap:8px;overflow-x:auto;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
   .tabs button{flex:none}
   .search input{width:100%;min-width:0}
@@ -230,7 +232,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:38px;cursor:pointer
   .photoCredit a,.tileCredit a{padding:14px 3px;margin:0 -3px} /* inline credit links: bigger tappable area, same look */
   .boardBack,.boardUpload{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;font-size:13px;bottom:auto}
   .boardUpload{bottom:12px}
-  .boardBack{top:12px;left:12px}
+  .boardBack{top:auto;right:auto;bottom:12px;left:12px} /* tabs own the top edge on phones */
   body:not(.has) .boardBack{display:none}
   .picker .pkFmt{min-height:44px;padding:0 14px}
   .pkRow{grid-template-columns:44px 44px 1fr;height:44px}
