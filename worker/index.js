@@ -25,7 +25,7 @@ export default {
     if (url.pathname === '/search') {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 100);
       if (!q) return new Response('Missing q', { status: 400, headers: cors });
-      const upstream = `${API}/search/photos?per_page=30&orientation=portrait&content_filter=high&query=${encodeURIComponent(q)}`;
+      const upstream = `${API}/search/photos?per_page=30&content_filter=high&query=${encodeURIComponent(q)}`;
       const cache = caches.default, key = new Request(upstream);
       let res = await cache.match(key);
       if (!res) {

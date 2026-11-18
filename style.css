@@ -3,7 +3,7 @@
 *{box-sizing:border-box}
 :root{--serif:"Sorts Mill Goudy",Georgia,serif;--sans:"Open Sans",-apple-system,"Helvetica Neue",sans-serif}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 var(--sans)}
-main{max-width:1180px;margin:0 auto;padding:32px 16px 64px}
+main{max-width:1180px;margin:0 auto;padding:32px 16px 64px;position:relative}
 h1{font-family:var(--serif);font-size:34px;line-height:1.1;font-weight:400;margin:0 0 6px}
 header p{margin:0;color:var(--mut)}
 .stage{display:flex;justify-content:center;align-items:flex-start;gap:0;height:min(70vh,640px)}
@@ -27,19 +27,23 @@ body.has .boardBack{display:block}
 .board.fade{opacity:0;pointer-events:none}
 .flyer{position:fixed;z-index:50;background:center/cover no-repeat;border-radius:12px;pointer-events:none;overflow:hidden;
   box-shadow:0 2px 6px rgba(0,0,0,.18),0 16px 36px rgba(0,0,0,.28)}
-.flyer.go,.flyer.goback{
+.flyer.go{
   transition:left .9s cubic-bezier(.22,.8,.2,1),top .9s cubic-bezier(.22,.8,.2,1),width .9s cubic-bezier(.22,.8,.2,1),height .9s cubic-bezier(.22,.8,.2,1),border-radius .9s linear,box-shadow .9s ease,opacity .5s ease .4s}
 .flyer.go{border-radius:0;box-shadow:0 0 0 rgba(0,0,0,0)}
-.flyer.back{border-radius:0;box-shadow:0 0 0 rgba(0,0,0,0)}
-.flyer.goback{border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.18),0 16px 36px rgba(0,0,0,.28)}
 body.flying .drop{background:transparent}
 body.flying #dropHint{visibility:hidden}
-.out,.panel,.change,.swatches,.photoCredit{transition:opacity .7s ease,transform .7s cubic-bezier(.22,.8,.2,1)}
-.out{transition-delay:.05s}.swatches{transition-delay:.15s}.panel{transition-delay:.2s}.change{transition-delay:.1s}
+.out,.panel,.change,.swatches,.photoCredit,.drop{transition:opacity .7s ease,transform .7s cubic-bezier(.22,.8,.2,1)}
+.out,.drop{transition-delay:.05s}.swatches{transition-delay:.15s}.panel{transition-delay:.2s}.change{transition-delay:.1s}
 body.entering .out,body.entering .panel,body.entering .change,body.entering .swatches{opacity:0;transform:translateY(10px)}
 body.entering .photoCredit,body.flying .photoCredit{opacity:0}
 body.flying #orig{opacity:0}
-@media (prefers-reduced-motion:reduce){.board,.flyer.go,.flyer.goback,.out,.panel,.change,.swatches{transition:none}}
+/* leaving the editor: the wall sits over the editor's spot while both cross-fade */
+body.leaving:not(.empty) .gallery{display:grid;position:absolute;margin:0}
+body.leaving .thumbs{display:none}
+body.leaving .drop{opacity:0}
+body.leaving .board{transition:opacity .7s ease}
+body.leaving .editor{pointer-events:none}
+@media (prefers-reduced-motion:reduce){.board,.flyer.go,.out,.drop,.panel,.change,.swatches{transition:none}}
 .board.over{outline:2px dashed var(--mut);outline-offset:-8px}
 .world{position:absolute;left:0;top:0;will-change:transform}
 .tile{position:absolute;border-radius:12px;overflow:hidden;border:0;padding:0;background:var(--line);cursor:inherit;
@@ -67,9 +71,10 @@ body.flying #orig{opacity:0}
 .photoCredit a{color:inherit;text-underline-offset:2px}
 .photoCredit a:hover{color:#fff}
 .photoCredit[hidden]{display:none}
-.tileCredit{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;font:500 11px var(--sans);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+.tileCredit{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;font:500 11px var(--sans);color:rgba(255,255,255,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(transparent,rgba(0,0,0,.6));opacity:0;transition:opacity .25s}
 .tileCredit a{color:inherit;text-underline-offset:2px}
+.tileCredit a:hover{color:#fff}
 .tile:hover .tileCredit,.tile:focus-within .tileCredit{opacity:1}
 @media (hover:none){.tileCredit{opacity:1}}
 .editor{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}

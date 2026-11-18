@@ -332,37 +332,28 @@
     img.src = url;
   }
 
-  // ---- editor -> wall transition: photo shrinks back to its tile (or the wall's centre), controls fade out ----
+  // ---- editor -> wall transition: everything moves at once. The wall fades in underneath the editor while
+  // the photo, gradient and controls all fade out together ----
   function leaveEditor() {
     if (busy) return; busy = true; closePicker();
-    const from = $('drop').getBoundingClientRect(), fl = document.createElement('div');
-    fl.className = 'flyer back';
-    Object.assign(fl.style, { left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px',
-                              backgroundImage: `url("${state.url}")` });
-    document.body.appendChild(fl);
-    document.body.classList.add('entering', 'flying'); // gradient + controls fade out, photo panel handed to the flyer
-    const FLY = REDUCED ? 0 : 920;
+    const gal = document.querySelector('.gallery'), ed = document.querySelector('.editor');
+    // lay the wall exactly where the editor is, so the swap at the end doesn't move anything
+    Object.assign(gal.style, { top: ed.offsetTop + 'px', left: ed.offsetLeft + 'px', width: ed.offsetWidth + 'px' });
+    board.classList.add('fade');
+    document.body.classList.add('leaving', 'entering'); // wall shown; photo, gradient + controls start fading out
+    board.offsetWidth; // commit layout so the wall can be measured
+    const tile = [...worldEl.children].find(t => t.dataset.full === state.url);
+    if (tile) { // open the wall with the photo's own tile in the middle
+      px = board.clientWidth / 2 - (parseFloat(tile.style.left) + tile.offsetWidth / 2);
+      py = board.clientHeight / 2 - (parseFloat(tile.style.top) + tile.offsetHeight / 2);
+    }
+    place();
+    board.classList.remove('fade'); // wall fades in as the editor fades out
     setTimeout(() => {
-      board.classList.add('fade');
+      gal.removeAttribute('style');
       document.body.classList.add('empty');
-      const tile = [...worldEl.children].find(t => t.dataset.full === state.url);
-      if (tile) { // pan the wall so the photo's own tile sits in the middle
-        px = board.clientWidth / 2 - (parseFloat(tile.style.left) + tile.offsetWidth / 2);
-        py = board.clientHeight / 2 - (parseFloat(tile.style.top) + tile.offsetHeight / 2);
-      }
-      place();
-      let to;
-      if (tile) to = tile.getBoundingClientRect();
-      else { const b = board.getBoundingClientRect(); to = { left: b.left + (b.width - 230) / 2, top: b.top + (b.height - 288) / 2, width: 230, height: 288 }; }
-      fl.offsetWidth; // commit start frame
-      fl.classList.add('goback');
-      Object.assign(fl.style, { left: to.left + 'px', top: to.top + 'px', width: to.width + 'px', height: to.height + 'px' });
-      if (!tile) fl.style.opacity = 0; // no tile to land on: dissolve into the wall
-      board.classList.remove('fade'); // wall fades in around it
-      setTimeout(() => {
-        fl.remove(); document.body.classList.remove('entering', 'flying'); busy = false;
-      }, FLY);
-    }, REDUCED ? 0 : 450);
+      document.body.classList.remove('leaving', 'entering'); busy = false;
+    }, REDUCED ? 0 : 920);
   }
 
   // ---- wall -> editor transition: picked photo grows into the preview panel, then the rest fades in ----
@@ -440,7 +431,15 @@
 
   // ---- Unsplash API guidelines: attribution + download tracking ----
   // Base URL of the proxy Worker in /worker (it keeps the Unsplash key off the page). Empty = search is hidden.
-  const PROXY = '';
+  const PROXY = 'https://soft-gradients-proxy.soft-gradients-proxy.workers.dev';
+  // Local testing only: on localhost, a key stored as localStorage.unsplashKey calls the API directly.
+  // It is never read on the live site, where visitors go through the proxy.
+  const DEV_KEY = (() => { try { return ['localhost', '127.0.0.1'].includes(location.hostname) ? localStorage.getItem('unsplashKey') || '' : ''; } catch { return ''; } })();
+  const devAuth = { headers: { Authorization: `Client-ID ${DEV_KEY}` } };
+  const searchPhotos = q => DEV_KEY
+    ? fetch(`https://api.unsplash.com/search/photos?per_page=30&content_filter=high&query=${encodeURIComponent(q)}`, devAuth)
+    : fetch(`${PROXY}/search?q=${encodeURIComponent(q)}`);
+  const pingDownload = loc => DEV_KEY ? fetch(loc, devAuth) : fetch(`${PROXY}/download?loc=${encodeURIComponent(loc)}`);
   const UTM = 'utm_source=soft_gradients&utm_medium=referral';
   const withUtm = u => u + (u.includes('?') ? '&' : '?') + UTM;
   const link = (href, text) => { const x = document.createElement('a'); x.href = withUtm(href); x.target = '_blank'; x.rel = 'noopener'; x.textContent = text; return x; };
@@ -454,9 +453,9 @@
   function usePhoto(p) {
     const el = $('photoCredit');
     if (p) { fillCredit(el, p); el.hidden = false; } else el.hidden = true;
-    if (PROXY && p && p.dl && !counted.has(p.dl)) { // tell Unsplash the photo was used (the proxy holds the API key)
+    if ((PROXY || DEV_KEY) && p && p.dl && !counted.has(p.dl)) { // tell Unsplash the photo was used (the proxy holds the API key)
       counted.add(p.dl);
-      fetch(`${PROXY}/download?loc=${encodeURIComponent(p.dl)}`).catch(() => {});
+      pingDownload(p.dl).catch(() => {});
     }
   }
 
@@ -565,16 +564,16 @@
     renderThumbs();
   });
   // live search goes through the proxy, so visitors never need their own Unsplash key
-  $('searchForm').hidden = !PROXY;
+  $('searchForm').hidden = !(PROXY || DEV_KEY);
   $('searchForm').addEventListener('submit', async e => {
     e.preventDefault();
     const q = $('q').value.trim();
-    // bias results toward wide scenery, away from subject close-ups
-    const query = `${q || (cat === 'wallpaper' ? 'scenery' : 'landscape')} landscape scenery`;
+    const query = q || (cat === 'wallpaper' ? 'scenery' : 'landscape'); // search anything: city, ocean, cat...
     try {
-      const r = await fetch(`${PROXY}/search?q=${encodeURIComponent(query)}`);
+      const r = await searchPhotos(query);
       if (!r.ok) throw new Error(r.status);
       const j = await r.json();
+      if (!j.results.length) { alert('No photos found for "' + query + '". Try another word.'); return; }
       items = j.results.map(p => ({ thumb: p.urls.thumb, board: p.urls.small, full: p.urls.regular, cat: null,
         name: p.user.name, profile: p.user.links.html, dl: p.links.download_location }));
       cat = 'all'; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.cat === 'all'));
